@@ -1,12 +1,12 @@
 ---
-- name: Preparing Workstation
+- name: Preparing My Workstation
   hosts: localhost
   connection: local
   tasks:
-
     - name: Installing Linux Apps
+      tags: apps
       become: true
-      apt:
+      ansible.builtin.apt:
         name: '{{ item }}'
         install_recommends: yes
         state: present
@@ -19,6 +19,7 @@
           - tree
           - apt-transport-https
           - ca-certificates
+          - software-properties-common
           - gnupg
           - python3-pip
           - make
@@ -28,325 +29,365 @@
           - zsh
           - flameshot
           - fonts-hack
+          - fonts-jetbrains-mono
           - tilix
-          - virtualbox
           - mlocate
-          - krita
           - jq
           - mtr
-
-    - block:
-      - name: Verify if Oh-My-zsh is installed
-        command: test -d /home/{{ ansible_user_id }}/.oh-my-zsh
-        register: ohmyzsh
-        ignore_errors: true
-      - name: Installing Oh-My-zsh
-        shell:
-          cmd: 'curl -fsL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | bash'
-          warn: false
-        when: ohmyzsh.rc != 0
-      - name: Changing Default Shell to ZSH
+          - qemu-kvm
+          - virt-manager
+          - guestfs-tools
+          - flatpak
+          - lsb-release
+          - gnome-shell-extension-manager
+          - build-essential 
+          - libssl-dev 
+          - zlib1g-dev 
+          - libbz2-dev 
+          - libreadline-dev 
+          - libsqlite3-dev 
+          - llvm 
+          - libncursesw5-dev 
+          - xz-utils 
+          - tk-dev 
+          - libxml2-dev 
+          - libxmlsec1-dev 
+          - libffi-dev 
+          - liblzma-dev
+          
+    - block:                          
+      - name: Adding existing user to group libvirt
         become: yes
-        user: 
+        ansible.builtin.user: 
           name: '{{ ansible_user_id }}'
-          shell: /bin/zsh 
-      - name: Changing Default ZSH Theme to Agnoster
-        lineinfile:
-          path: /home/{{ ansible_user_id }}/.zshrc
-          regexp: '^ZSH_THEME='
-          line: 'ZSH_THEME="agnoster"'
-      - name: Creating ZSH Completion folder
-        file:
-          path: /home/{{ ansible_user_id }}/.oh-my-zsh/completions
-          state: directory
-          mode: 0755
-      - name: Adding autoload to compinit
-        lineinfile:
-          path: /home/{{ ansible_user_id }}/.zshrc
-          line: 'autoload -U compinit && compinit'
+          groups: libvirt
+          append: yes
+
+    - name: Installing Flatpaks
+      tags: flatpak
+      block:                
+      - name: Add the flathub flatpak repository remote to the user installation
+        community.general.flatpak_remote:
+          name: flathub
           state: present
-
-    - name: Installing AWS CLI via pip3
-      become: true
-      pip:
-        name: awscli
-        executable: pip3
-
-    - block:
-      - name: Install Google Key
-        become: true
-        apt_key: 
-          url: 'https://dl.google.com/linux/linux_signing_key.pub'
+          flatpakrepo_url: https://flathub.org/repo/flathub.flatpakrepo
+          method: user
+          
+      - name: Install flatpaks
+        community.general.flatpak:
+          name: '{{ item }}'
           state: present
-      - name: Install Google Repository
+          method: user
+        loop:
+            - 'com.brave.Browser'
+            - 'com.jetbrains.IntelliJ-IDEA-Community'
+            - 'io.dbeaver.DBeaverCommunity'
+            - 'org.qbittorrent.qBittorrent'
+            - 'org.videolan.VLC'
+            - 'org.remmina.Remmina'
+            - 'com.github.tchx84.Flatseal'
+            - 'com.microsoft.Teams'
+          
+    - block:
+      - name: Install Sublime Text Key
         become: true
-        apt_repository:
-          repo: 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main'
+        ansible.builtin.apt_key:
+          url: 'https://download.sublimetext.com/sublimehq-pub.gpg'
           state: present
-          filename: google-chrome
-      - name: Install Google Chrome
+          keyring: /etc/apt/trusted.gpg.d/sublimehq-pub.gpg
+          
+      - name: Install Sublime Text Repository
         become: true
-        apt:
-          name: google-chrome-stable
-
-    - block:
-      - name: Installing Vagrant 2.2.18
-        become: true
-        unarchive:
-          src: 'https://releases.hashicorp.com/vagrant/2.2.18/vagrant_2.2.18_linux_amd64.zip'
-          dest: /usr/local/bin
-          remote_src: yes
-
-    - block:
-      - name: Installing Terraform 0.12.31
-        become: true
-        unarchive:
-          src: 'https://releases.hashicorp.com/terraform/0.12.31/terraform_0.12.31_linux_amd64.zip'
-          dest: /usr/local/bin
-          remote_src: yes
-      - name: Renaming terraform12 binary
-        become: true
-        command: mv /usr/local/bin/terraform /usr/local/bin/terraform12
-      - name: Installing Terraform 0.13.7 
-        become: true
-        unarchive:
-          src: 'https://releases.hashicorp.com/terraform/0.13.7/terraform_0.13.7_linux_amd64.zip'
-          dest: /usr/local/bin
-          remote_src: yes
-      - name: Renaming terraform13 binary
-        become: true
-        command: mv /usr/local/bin/terraform /usr/local/bin/terraform13
-      - name: Installing Terraform 0.14.11
-        become: true
-        unarchive:
-          src: 'https://releases.hashicorp.com/terraform/0.14.11/terraform_0.14.11_linux_amd64.zip'
-          dest: /usr/local/bin
-          remote_src: yes
-      - name: Renaming terraform14 binary
-        become: true
-        command: mv /usr/local/bin/terraform /usr/local/bin/terraform14
-      - name: Installing Terraform 0.15.0
-        become: true
-        unarchive:
-          src: 'https://releases.hashicorp.com/terraform/0.15.5/terraform_0.15.5_linux_amd64.zip'
-          dest: /usr/local/bin
-          remote_src: yes
-      - name: Renaming terraform15 binary
-        become: true
-        command: mv /usr/local/bin/terraform /usr/local/bin/terraform15
-      - name: Installing Terraform 1.0.4
-        become: true
-        unarchive:
-          src: 'https://releases.hashicorp.com/terraform/1.0.4/terraform_1.0.4_linux_amd64.zip'
-          dest: /usr/local/bin
-          remote_src: yes
-      - name: Renaming terraform1 binary
-        become: true
-        command: mv /usr/local/bin/terraform /usr/local/bin/terraform1
-
-    - block:
-      - name: Installing Vault 1.8.1
-        become: true
-        unarchive:
-          src: 'https://releases.hashicorp.com/vault/1.8.1/vault_1.8.1_linux_amd64.zip'
-          dest: /usr/local/bin
-          remote_src: yes
-
-    - block:
-      - name: Installing gomplate 3.9.0
-        become: true
-        get_url:    
-          url: 'https://github.com/hairyhenderson/gomplate/releases/download/v3.9.0/gomplate_linux-amd64'
-          dest: /usr/local/bin/gomplate
-          mode: 755
-
-    - block:
-      - name: Installing Stern 1.11.0
-        become: true
-        get_url:    
-          url: 'https://github.com/wercker/stern/releases/download/1.11.0/stern_linux_amd64'
-          dest: /usr/local/bin/stern
-          mode: 755
-
-    - block:
-      - name: Install Google Cloud SDK Key
-        become: true
-        apt_key:
-          url: 'https://packages.cloud.google.com/apt/doc/apt-key.gpg'
+        ansible.builtin.apt_repository:
+          repo: 'deb https://download.sublimetext.com/ apt/stable/'
           state: present
-      - name: Install Google Cloud SDK Repository
+          filename: sublime-text
+          
+      - name: Install Sublime Text
         become: true
-        apt_repository:
-          repo: 'deb [arch=amd64] https://packages.cloud.google.com/apt cloud-sdk main'
-          state: present
-          filename: google-cloud-sdk
-      - name: Install Google Cloud SDK
-        become: true
-        apt:
-          name: google-cloud-sdk
-
+        ansible.builtin.apt:
+          name: sublime-text
           
     - block:
       - name: Install Microsoft Key
         become: true
-        apt_key:
+        ansible.builtin.apt_key:
           url: 'https://packages.microsoft.com/keys/microsoft.asc'
           state: present
+          keyring: /etc/apt/trusted.gpg.d/microsoft.gpg
+          
       - name: Install VSCode Repository
         become: true
-        apt_repository:
+        ansible.builtin.apt_repository:
           repo: 'deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main'
           state: present
           filename: vscode
+          
       - name: Install Visual Studio Code
         become: true
         apt:
           name: code
+          
       - name: Install Virtual Studio Code Extensions
-        shell:
+        register: extension_installed
+        changed_when: '"already installed" not in extension_installed.stdout'
+        ansible.builtin.shell:
           cmd: code --install-extension '{{ item }}' 
         loop: 
-          - ms-python.python
-          - ms-azuretools.vscode-docker
-          - bbenoist.vagrant
-          - hashicorp.terraform
-          - gruntfuggly.todo-tree
-          - njpwerner.autodocstring
+          - dracula-theme.theme-dracula
           - eamodio.gitlens
+          - ms-azuretools.vscode-docker
+          - ms-vscode-remote.remote-containers
+          - naco-siren.gradle-language
+          - Pivotal.vscode-spring-boot
+          - PKief.material-icon-theme
+          - PKief.material-product-icons
+          - redhat.fabric8-analytics
+          - redhat.java
+          - redhat.vscode-apache-camel
+          - redhat.vscode-commons
+          - redhat.vscode-microprofile
+          - redhat.vscode-quarkus
+          - redhat.vscode-xml
+          - redhat.vscode-yaml
+          - rocketseat.theme-omni
+          - VisualStudioExptTeam.vscodeintellicode
+          - vscjava.vscode-gradle
+          - vscjava.vscode-java-debug
+          - vscjava.vscode-java-dependency
+          - vscjava.vscode-java-pack
+          - vscjava.vscode-java-test
+          - vscjava.vscode-maven
+          - vscjava.vscode-spring-initializr
+          - vscode-icons-team.vscode-icons
+
+    - block:
+      - name: Verify if Oh-My-Zsh is installed
+        ansible.builtin.command: test -d /home/{{ ansible_user_id }}/.oh-my-zsh
+        register: ohmyzsh
+        ignore_errors: true
+       
+      - name: Installing Oh-My-zsh
+        ansible.builtin.shell:
+          cmd: 'curl -fsL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | bash'
+          warn: false
+        when: ohmyzsh.rc != 0
+       
+      - name: Changing Default Shell to ZSH
+        become: yes
+        ansible.builtin.user: 
+          name: '{{ ansible_user_id }}'
+          shell: /bin/zsh 
+         
+      - name: Changing Default ZSH Theme to Agnoster
+        ansible.builtin.lineinfile:
+          path: /home/{{ ansible_user_id }}/.zshrc
+          regexp: '^ZSH_THEME='
+          line: 'ZSH_THEME="agnoster"'
+         
+      - name: Creating ZSH Completion folder
+        ansible.builtin.file:
+          path: /home/{{ ansible_user_id }}/.oh-my-zsh/completions
+          state: directory
+          mode: 0755
+         
+      - name: Adding autoload to compinit
+        ansible.builtin.lineinfile:
+          path: /home/{{ ansible_user_id }}/.zshrc
+          line: 'autoload -U compinit && compinit'
+          state: present
+
+      - name: Verify if Zplug is already installed
+        ansible.builtin.command: test -d /home/{{ ansible_user_id }}/.zplug
+        register: zplug
+        ignore_errors: true 
+
+      - name: Installing Zplug ZSH plugin manager
+        ansible.builtin.shell: 
+          cmd: 'curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh'
+          warn: false
+        when: zplug.rc != 0
+
+      - name: Adding Zplug plugins
+        ansible.builtin.lineinfile:
+          path: /home/{{ ansible_user_id }}/.zshrc
+          state: present
+          line: '{{ item }}'
+        loop:
+          - 'source /home/{{ ansible_user_id }}/.zplug/init.zsh'
+          - 'zplug "spaceship-prompt/spaceship-prompt", use:spaceship.zsh, from:github, as:theme'
+          - 'zplug "zsh-users/zsh-syntax-highlighting", defer:2'
+          - 'zplug "zsh-users/zsh-autosuggestions"'
+          - 'zplug "zsh-users/zsh-completions"'
+          - 'zplug load'
 
     - block: 
       - name: Install Docker Key
         become: true
-        apt_key:
+        ansible.builtin.apt_key:
           url: 'https://download.docker.com/linux/ubuntu/gpg'
           state: present
+          keyring: /etc/apt/trusted.gpg.d/docker.gpg
+         
       - name: Install Docker Repository
         become: true
-        apt_repository:
+        ansible.builtin.apt_repository:
           repo: 'deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable'
           state: present
           filename: docker-ce
+         
       - name: Install Docker
         become: true
-        apt:
+        ansible.builtin.apt:
           name: docker-ce
+         
       - name: Adding existing user to group Docker
         become: yes
-        user: 
+        ansible.builtin.user: 
           name: '{{ ansible_user_id }}'
           groups: docker 
           append: yes
+
+      - name: Create docker cli-plugins directory
+        become: true
+        ansible.builtin.file:
+          path: '/usr/local/lib/docker/cli-plugins'
+          state: directory
+         
       - name: Install Docker-Compose
         become: true
-        get_url:
-          url: 'https://github.com/docker/compose/releases/download/1.26.2/docker-compose-Linux-x86_64'
-          dest: '/usr/local/bin/docker-compose'
-          mode: 755
-      - name: Install Docker Machine Bash Completion
-        become: true
-        get_url:
-          url: 'https://raw.githubusercontent.com/docker/machine/v0.16.0/contrib/completion/bash/docker-machine.bash'
-          dest: '/etc/bash_completion.d/docker-machine'
-      - name: Install Docker-Compose Bash Completion
-        become: true
-        get_url:
-          url: 'https://raw.githubusercontent.com/docker/compose/1.26.2/contrib/completion/bash/docker-compose'
-          dest: '/etc/bash_completion.d/docker-compose'
-      - name: Install Docker-Compose and Docker Machine Zsh Completion
-        lineinfile:
+        ansible.builtin.get_url:
+          url: 'https://github.com/docker/compose/releases/download/v2.5.1/docker-compose-linux-x86_64'
+          dest: '/usr/local/lib/docker/cli-plugins/docker-compose'
+          mode: 755                       
+         
+      - name: Install Docker and Docker-Compose Zsh Completion
+        ansible.builtin.lineinfile:
           path: /home/{{ ansible_user_id }}/.zshrc
           regexp: '^plugins='
           line: 'plugins=(git docker docker-compose)'
-        
-    - block:
-      - name: Installing Kubectl 1.22.0
+       
+    - name: Kubernetes Tasks
+      tags: kubernetes
+      block:      
+      - name: Installing Kind 0.14.0
         become: true
-        get_url:    
-          url: 'https://dl.k8s.io/release/v1.22.0/bin/linux/amd64/kubectl'
+        ansible.builtin.uri: 
+          url: https://kind.sigs.k8s.io/dl/v0.14.0/kind-linux-amd64
+          dest: /usr/local/bin/kind
+          mode: 755
+          creates: /usr/local/bin/kind
+
+      - name: Installing Kubectl 1.24.0
+        become: true
+        ansible.builtin.get_url:    
+          url: 'https://dl.k8s.io/release/v1.24.0/bin/linux/amd64/kubectl'
           dest: /usr/local/bin/kubectl
           mode: 755
+         
       - name: Downloading Kubectx and Kubens 
         become: true
-        git:
+        ansible.builtin.git:
           repo: 'https://github.com/ahmetb/kubectx'
           dest: /opt/kubectx 
+         
       - name: Creating Symlink to kubectx and kubens 
         become: true
-        file:
+        ansible.builtin.file:
           src: '/opt/kubectx/{{ item }}'
           dest: '/usr/local/bin/{{ item }}'
           state: link
         with_items:
           - kubectx
           - kubens  
+         
       - name: Creating ZSH Completion  
-        file:
-          src: '/opt/kubectx/completion/{{ item }}'
+        ansible.builtin.file:
+          src: '/opt/kubectx/completion/_{{ item }}'
           dest: '/home/{{ ansible_user_id }}/.oh-my-zsh/completions/_{{ item }}'
           state: link
         with_items:
           - kubectx.zsh
-          - kubens.zsh 
-          
-    - block:
-      - name: Adding Longsleep/Golang Backports Repository
-        become: true
-        apt_repository:
-          repo: 'ppa:longsleep/golang-backports'
-      - name: Install Golang 
-        become: true
-        apt:
-          name: golang-go
-          
-# OPTIONAL:
-#  - PEEK - Lightweight Screen Recorder that can export as GIF
-#  - OBS-STUDIO - Screen Recorder and Casting Software 
-#  - Brave Browser - Secure web browser
-#  - Ulauncher - Application Launcher
+          - kubens.zsh
 
     - block:
-      - name: Adding Peek Repository
-        become: true
-        apt_repository:
-          repo: 'ppa:peek-developers/stable'
-      - name: Install Peek
-        become: true
-        apt:
-          name: peek
+      - name: Verify if SDKMAN already installed
+        ansible.builtin.command: test -d /home/{{ ansible_user_id }}/.sdkman
+        register: sdkman
+        ignore_errors: true
 
-    - block:
-      - name: Install obsproject Ubuntu Repo
-        become: true
-        apt_repository:
-          repo: 'ppa:obsproject/obs-studio'
-      - name: Install obs Studio
-        become: true
-        apt:
-          name: obs-studio
+      - name: Installing SDKMAN
+        ansible.builtin.shell:
+          cmd: 'curl -s "https://get.sdkman.io" | bash'
+        when: sdkman.rc != 0
 
-    - block: 
-      - name: Install Brave Key
-        become: true
-        apt_key:
-          url: 'https://brave-browser-apt-release.s3.brave.com/brave-core.asc'
-          state: present
-      - name: Install Brave Repository
-        become: true
-        apt_repository:
-          repo: 'deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main'
-          state: present
-          filename: brave
-      - name: Install Brave Browser
-        become: true
-        apt:
-          name: brave-browser
+      - name: Installing SDKs
+        register: sdk_install
+        changed_when: '"is already installed." not in sdk_install.stdout'
+        failed_when: >-
+          sdk_install.rc != 0 and
+          "is already installed." not in sdk_install.stdout
+        ansible.builtin.shell: >-
+          . /home/{{ ansible_user_id }}/.sdkman/bin/sdkman-init.sh &&
+          sdk install {{ item }}
+        args: 
+          executable: /bin/bash
+        loop:
+          - java 8.0.332-tem
+          - java 11.0.15-tem
+          - java 17.0.3-tem
+          - gradle 7.3.3
+          - maven 3.8.5
 
-    - block:
-      - name: Adding Ulauncher Repository
-        become: true
-        apt_repository:
-          repo: 'ppa:agornostal/ulauncher'
-      - name: Install Ulauncher
-        become: true
-        apt:
-          name: ulauncher
+      - name: Set default SDKs
+        ansible.builtin.shell: >-
+          . /home/{{ ansible_user_id }}/.sdkman/bin/sdkman-init.sh &&
+          sdk default {{ item }}
+        args:
+          executable: /bin/bash
+        loop:
+          - java 11.0.15-tem
+          - gradle 7.3.3 
+          - maven 3.8.5
+
+    - name: Node Tasks
+      tags: node
+      block:
+      - name: Install NVM
+        ansible.builtin.shell: 
+          cmd: 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash'
+          warn: false        
+          creates: '{{ ansible_env.HOME }}/.nvm/nvm.sh'
+
+      - name: Install Node LTS
+        ansible.builtin.shell: >-
+          . {{ ansible_env.HOME }}/.nvm/nvm.sh && 
+          nvm install {{ item }}
+        args:
+          executable: /bin/bash
+        loop:
+          - lts/erbium
+          - lts/fermium
+          - lts/gallium
+
+    - name: Python Tasks
+      tags: python
+      block: 
+        - name: Install Pyenv
+          ansible.builtin.shell: 
+            cmd: 'curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash'
+            warn: false
+            creates: '{{ ansible_env.HOME }}/.pyenv/bin/pyenv'
+
+        - name: Configurando pyenv no .zshrc
+          ansible.builtin.blockinfile:
+            path: '{{ ansible_env.HOME }}/.zshrc'
+            state: present
+            block: |
+              export PYENV_ROOT="$HOME/.pyenv"
+              command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+              eval "$(pyenv init -)"
+
+        - name: Instalando Python 3.10.4
+          ansible.builtin.shell: >-
+            {{ ansible_env.HOME }}/.pyenv/bin/pyenv install 3.10.4          
