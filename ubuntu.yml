@@ -82,14 +82,13 @@
           state: present
           method: user
         loop:
-            - 'com.brave.Browser'
-            - 'com.jetbrains.IntelliJ-IDEA-Community'
-            - 'io.dbeaver.DBeaverCommunity'
-            - 'org.qbittorrent.qBittorrent'
             - 'org.videolan.VLC'
             - 'org.remmina.Remmina'
             - 'com.github.tchx84.Flatseal'
             - 'com.microsoft.Teams'
+            - 'io.podman_desktop.PodmanDesktop'
+            - 'org.keepassxc.KeePassXC'
+            - 'rest.insomnia.Insomnia'
           
     - block:
       - name: Install Sublime Text Key
