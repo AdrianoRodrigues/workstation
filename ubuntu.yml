@@ -279,7 +279,9 @@
           - kubectx.zsh
           - kubens.zsh
 
-    - block:
+    - name: Installing java tools
+      tags: java
+      block:
       - name: Verify if SDKMAN already installed
         ansible.builtin.command: test -d /home/{{ ansible_user_id }}/.sdkman
         register: sdkman
@@ -302,10 +304,10 @@
         args: 
           executable: /bin/bash
         loop:
-          - java 8.0.332-tem
-          - java 11.0.15-tem
-          - java 17.0.3-tem
-          - gradle 7.3.3
+          - java 8.0.432-tem
+          - java 11.0.25-tem
+          - java 17.0.13-tem
+          - gradle 8.10.2
           - maven 3.8.5
 
       - name: Set default SDKs
@@ -315,8 +317,8 @@
         args:
           executable: /bin/bash
         loop:
-          - java 11.0.15-tem
-          - gradle 7.3.3 
+          - java 17.0.13-tem
+          - gradle 8.10.2 
           - maven 3.8.5
 
     - name: Node Tasks
