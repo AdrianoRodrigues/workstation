@@ -318,27 +318,41 @@
           executable: /bin/bash
         loop:
           - java 17.0.13-tem
-          - gradle 8.10.2 
+          - gradle 8.10.2
           - maven 3.8.5
 
     - name: Node Tasks
       tags: node
       block:
-      - name: Install NVM
-        ansible.builtin.shell: 
-          cmd: 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash'
-          creates: '{{ ansible_env.HOME }}/.nvm/nvm.sh'
+        - name: Install asdf
+          ansible.builtin.git:
+            repo: https://github.com/asdf-vm/asdf.git
+            dest: '{{ ansible_env.HOME }}/.asdf'
+            version: v0.15.0
 
-      - name: Install Node LTS
-        ansible.builtin.shell: >-
-          . {{ ansible_env.HOME }}/.nvm/nvm.sh && 
-          nvm install {{ item }}
-        args:
-          executable: /bin/bash
-        loop:
-          - lts/erbium
-          - lts/fermium
-          - lts/gallium
+        - name: Configuring asdf
+          ansible.builtin.blockinfile:
+            path: /home/{{ ansible_user_id }}/.zshrc
+            block: |
+              . "$HOME/.asdf/asdf.sh"
+              # append completions to fpath
+              fpath=(${ASDF_DIR}/completions $fpath)
+
+      # - name: Install NVM
+      #   ansible.builtin.shell: 
+      #     cmd: 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash'
+      #     creates: '{{ ansible_env.HOME }}/.nvm/nvm.sh'
+
+      # - name: Install Node LTS
+      #   ansible.builtin.shell: >-
+      #     . {{ ansible_env.HOME }}/.nvm/nvm.sh && 
+      #     nvm install {{ item }}
+      #   args:
+      #     executable: /bin/bash
+      #   loop:
+      #     - lts/erbium
+      #     - lts/fermium
+      #     - lts/gallium
 
     - name: Python Tasks
       tags: python
