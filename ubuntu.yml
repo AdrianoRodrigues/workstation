@@ -31,9 +31,11 @@
           - fonts-hack
           - fonts-jetbrains-mono
           - tilix
-          - mlocate
+          - locate
           - jq
           - mtr
+          - socat
+          - nmap
           - qemu-kvm
           - virt-manager
           - guestfs-tools
