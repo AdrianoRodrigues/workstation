@@ -90,7 +90,9 @@
             - 'org.keepassxc.KeePassXC'
             - 'rest.insomnia.Insomnia'
           
-    - block:
+    - name: Installing Sublime Text
+      tags: sublime
+      block:
       - name: Install Sublime Text Key
         become: true
         ansible.builtin.apt_key:
