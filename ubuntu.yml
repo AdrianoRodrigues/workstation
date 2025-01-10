@@ -145,7 +145,6 @@
       - name: Installing Oh-My-zsh
         ansible.builtin.shell:
           cmd: 'curl -fsL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | bash'
-          warn: false
         when: ohmyzsh.rc != 0
        
       - name: Changing Default Shell to ZSH
@@ -180,18 +179,27 @@
       - name: Installing Zinit ZSH plugin manager
         ansible.builtin.shell: 
           cmd: 'curl --fail --show-error --silent --location https://raw.githubusercontent.com/zdharma-continuum/zinit/HEAD/scripts/install.sh | bash'
-          warn: false
         when: zinit.rc != 0
 
       - name: Adding Zinit plugins
-        ansible.builtin.lineinfile:
+        ansible.builtin.blockinfile:
           path: /home/{{ ansible_user_id }}/.zshrc
-          state: present
-          line: '{{ item }}'
-        loop:
-          - 'zinit light zsh-users/zsh-syntax-highlighting'
-          - 'zinit light zsh-users/zsh-autosuggestions'
-          - 'zinit light zsh-users/zsh-completions'
+          insertafter: "End of Zinit's installer chunk"
+          prepend_newline: true
+          append_newline: true
+          block: |
+            zinit light zsh-users/zsh-syntax-highlighting
+            zinit light zsh-users/zsh-autosuggestions
+            zinit light zsh-users/zsh-completions
+
+            # Load starship theme
+            # line 1: `starship` binary as command, from github release
+            # line 2: starship setup at clone(create init.zsh, completion)
+            # line 3: pull behavior same as clone, source init.zsh
+            zinit ice as"command" from"gh-r" \
+                      atclone"./starship init zsh > init.zsh; ./starship completions zsh > _starship" \
+                      atpull"%atclone" src"init.zsh"
+            zinit light starship/starship
 
     - block: 
       - name: Install Docker Key
@@ -328,7 +336,6 @@
       - name: Install NVM
         ansible.builtin.shell: 
           cmd: 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash'
-          warn: false        
           creates: '{{ ansible_env.HOME }}/.nvm/nvm.sh'
 
       - name: Install Node LTS
@@ -348,7 +355,6 @@
         - name: Install Pyenv
           ansible.builtin.shell: 
             cmd: 'curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash'
-            warn: false
             creates: '{{ ansible_env.HOME }}/.pyenv/bin/pyenv'
 
         - name: Configurando pyenv no .zshrc
