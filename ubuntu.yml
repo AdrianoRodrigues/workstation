@@ -134,7 +134,9 @@
         apt:
           name: code
 
-    - block:
+    - name: Installing Oh-My-Zsh
+      tags: ohmyzsh
+      block:
       - name: Verify if Oh-My-Zsh is installed
         ansible.builtin.command: test -d /home/{{ ansible_user_id }}/.oh-my-zsh
         register: ohmyzsh
@@ -170,29 +172,26 @@
           line: 'autoload -U compinit && compinit'
           state: present
 
-      - name: Verify if Zplug is already installed
-        ansible.builtin.command: test -d /home/{{ ansible_user_id }}/.zplug
-        register: zplug
-        ignore_errors: true 
+      - name: Verify if Zinit is already installed
+        ansible.builtin.command: test -d /home/{{ ansible_user_id }}/.local/share/zinit
+        register: zinit
+        ignore_errors: true
 
-      - name: Installing Zplug ZSH plugin manager
+      - name: Installing Zinit ZSH plugin manager
         ansible.builtin.shell: 
-          cmd: 'curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh'
+          cmd: 'curl --fail --show-error --silent --location https://raw.githubusercontent.com/zdharma-continuum/zinit/HEAD/scripts/install.sh | bash'
           warn: false
-        when: zplug.rc != 0
+        when: zinit.rc != 0
 
-      - name: Adding Zplug plugins
+      - name: Adding Zinit plugins
         ansible.builtin.lineinfile:
           path: /home/{{ ansible_user_id }}/.zshrc
           state: present
           line: '{{ item }}'
         loop:
-          - 'source /home/{{ ansible_user_id }}/.zplug/init.zsh'
-          - 'zplug "spaceship-prompt/spaceship-prompt", use:spaceship.zsh, from:github, as:theme'
-          - 'zplug "zsh-users/zsh-syntax-highlighting", defer:2'
-          - 'zplug "zsh-users/zsh-autosuggestions"'
-          - 'zplug "zsh-users/zsh-completions"'
-          - 'zplug load'
+          - 'zinit light zsh-users/zsh-syntax-highlighting'
+          - 'zinit light zsh-users/zsh-autosuggestions'
+          - 'zinit light zsh-users/zsh-completions'
 
     - block: 
       - name: Install Docker Key
