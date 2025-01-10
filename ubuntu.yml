@@ -56,6 +56,7 @@
           - libxmlsec1-dev 
           - libffi-dev 
           - liblzma-dev
+          - gnome-tweaks
           
     - block:                          
       - name: Adding existing user to group libvirt
