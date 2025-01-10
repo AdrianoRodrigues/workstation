@@ -201,7 +201,9 @@
                       atpull"%atclone" src"init.zsh"
             zinit light starship/starship
 
-    - block: 
+    - name: Installing Docker and Docker Compose
+      tags: docker
+      block: 
       - name: Install Docker Key
         become: true
         ansible.builtin.apt_key:
@@ -216,7 +218,7 @@
           state: present
           filename: docker-ce
          
-      - name: Install Docker
+      - name: Install Docker and Docker Compose
         become: true
         ansible.builtin.apt:
           name: docker-ce
@@ -226,20 +228,7 @@
         ansible.builtin.user: 
           name: '{{ ansible_user_id }}'
           groups: docker 
-          append: yes
-
-      - name: Create docker cli-plugins directory
-        become: true
-        ansible.builtin.file:
-          path: '/usr/local/lib/docker/cli-plugins'
-          state: directory
-         
-      - name: Install Docker-Compose
-        become: true
-        ansible.builtin.get_url:
-          url: 'https://github.com/docker/compose/releases/download/v2.5.1/docker-compose-linux-x86_64'
-          dest: '/usr/local/lib/docker/cli-plugins/docker-compose'
-          mode: 755                       
+          append: yes                       
          
       - name: Install Docker and Docker-Compose Zsh Completion
         ansible.builtin.lineinfile:
