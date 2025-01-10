@@ -16,7 +16,7 @@ sudo apt update && sudo apt install ansible unzip git -y
 ```
 2. Clone this repository
 ```bash
-git clone https://github.com/caiodelgadonew/tools.git
+git clone https://github.com/adrianorodrigues/workstation.git
 ```
 
 3. Apply the configuration
@@ -31,6 +31,6 @@ GPLv3
 
 # Author Information
 Created by [Caio Delgado](https://linktr.ee/caiodelgadonew)
-Modified by [Adriano Rodrigues](https://github.com/AdrianoRodrigues)
+Modified by [Adriano Rodrigues](https://github.com/adrianorodrigues)
 
 Contributions are more than welcome!
