@@ -112,7 +112,9 @@
         ansible.builtin.apt:
           name: sublime-text
           
-    - block:
+    - name: Installing VS Code
+      tags: code
+      block:
       - name: Install Microsoft Key
         become: true
         ansible.builtin.apt_key:
@@ -131,39 +133,6 @@
         become: true
         apt:
           name: code
-          
-      - name: Install Virtual Studio Code Extensions
-        register: extension_installed
-        changed_when: '"already installed" not in extension_installed.stdout'
-        ansible.builtin.shell:
-          cmd: code --install-extension '{{ item }}' 
-        loop: 
-          - dracula-theme.theme-dracula
-          - eamodio.gitlens
-          - ms-azuretools.vscode-docker
-          - ms-vscode-remote.remote-containers
-          - naco-siren.gradle-language
-          - Pivotal.vscode-spring-boot
-          - PKief.material-icon-theme
-          - PKief.material-product-icons
-          - redhat.fabric8-analytics
-          - redhat.java
-          - redhat.vscode-apache-camel
-          - redhat.vscode-commons
-          - redhat.vscode-microprofile
-          - redhat.vscode-quarkus
-          - redhat.vscode-xml
-          - redhat.vscode-yaml
-          - rocketseat.theme-omni
-          - VisualStudioExptTeam.vscodeintellicode
-          - vscjava.vscode-gradle
-          - vscjava.vscode-java-debug
-          - vscjava.vscode-java-dependency
-          - vscjava.vscode-java-pack
-          - vscjava.vscode-java-test
-          - vscjava.vscode-maven
-          - vscjava.vscode-spring-initializr
-          - vscode-icons-team.vscode-icons
 
     - block:
       - name: Verify if Oh-My-Zsh is installed
