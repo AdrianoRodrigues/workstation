@@ -239,18 +239,18 @@
     - name: Kubernetes Tasks
       tags: kubernetes
       block:      
-      - name: Installing Kind 0.14.0
+      - name: Installing Kind 0.26.0
         become: true
         ansible.builtin.uri: 
-          url: https://kind.sigs.k8s.io/dl/v0.14.0/kind-linux-amd64
+          url: https://kind.sigs.k8s.io/dl/v0.26.0/kind-linux-amd64
           dest: /usr/local/bin/kind
           mode: 755
           creates: /usr/local/bin/kind
 
-      - name: Installing Kubectl 1.24.0
+      - name: Installing Kubectl 1.32.0
         become: true
         ansible.builtin.get_url:    
-          url: 'https://dl.k8s.io/release/v1.24.0/bin/linux/amd64/kubectl'
+          url: 'https://dl.k8s.io/release/v1.32.0/bin/linux/amd64/kubectl'
           dest: /usr/local/bin/kubectl
           mode: 755
          
