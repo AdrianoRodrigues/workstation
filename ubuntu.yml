@@ -345,6 +345,24 @@
           args:
             executable: /bin/bash
 
+        - name: Install NodeJS versions
+          ansible.builtin.shell: |
+            . {{ ansible_env.HOME }}/.asdf/asdf.sh
+            asdf install nodejs {{ item }}
+          args:
+            executable: /bin/bash
+          loop:
+            - 22.13.0
+            - 20.18.1
+            - 14.21.3
+        
+        - name: Configure NodeJS global version
+          ansible.builtin.shell: |
+            . {{ ansible_env.HOME }}/.asdf/asdf.sh
+            asdf global nodejs 22.13.0
+          args:
+            executable: /bin/bash          
+
       # - name: Install NVM
       #   ansible.builtin.shell: 
       #     cmd: 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash'
