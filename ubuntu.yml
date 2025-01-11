@@ -482,6 +482,19 @@
             path: /opt/ideaIC/bin
           register: idea_bin_dir
 
+        - name: Create dir to install Intellij Idea Community
+          become: true
+          ansible.builtin.file:
+            path: /opt/ideaIC
+            state: directory
+            modification_time: preserve
+            access_time: preserve
+            recurse: true
+            owner: '{{ ansible_user_id }}'
+            group: '{{ ansible_user_gid }}'
+            mode: '0755'
+          when: not idea_bin_dir.stat.exists
+
         - name: Download Intellij Idea Community tarball
           ansible.builtin.get_url:
             url: https://download.jetbrains.com/idea/ideaIC-2024.3.1.1.tar.gz
