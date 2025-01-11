@@ -8,74 +8,73 @@
       become: true
       ansible.builtin.apt:
         name: '{{ item }}'
-        install_recommends: yes
+        install_recommends: true
         state: present
       loop:
-          - vim
-          - htop
-          - curl
-          - wget
-          - ncdu
-          - tree
-          - apt-transport-https
-          - ca-certificates
-          - software-properties-common
-          - gnupg
-          - python3-pip
-          - make
-          - git
-          - bash-completion
-          - gnupg-agent
-          - zsh
-          - flameshot
-          - fonts-hack
-          - fonts-jetbrains-mono
-          - tilix
-          - locate
-          - jq
-          - mtr
-          - socat
-          - nmap
-          - qemu-kvm
-          - virt-manager
-          - guestfs-tools
-          - flatpak
-          - lsb-release
-          - gnome-shell-extension-manager
-          - build-essential 
-          - libssl-dev 
-          - zlib1g-dev 
-          - libbz2-dev 
-          - libreadline-dev 
-          - libsqlite3-dev 
-          - llvm 
-          - libncursesw5-dev 
-          - xz-utils 
-          - tk-dev 
-          - libxml2-dev 
-          - libxmlsec1-dev 
-          - libffi-dev 
-          - liblzma-dev
-          - gnome-tweaks
-          
-    - block:                          
-      - name: Adding existing user to group libvirt
-        become: yes
-        ansible.builtin.user: 
-          name: '{{ ansible_user_id }}'
-          groups: libvirt
-          append: yes
+        - vim
+        - htop
+        - curl
+        - wget
+        - ncdu
+        - tree
+        - apt-transport-https
+        - ca-certificates
+        - software-properties-common
+        - gnupg
+        - python3-pip
+        - make
+        - git
+        - bash-completion
+        - gnupg-agent
+        - zsh
+        - flameshot
+        - fonts-hack
+        - fonts-jetbrains-mono
+        - tilix
+        - locate
+        - jq
+        - mtr
+        - socat
+        - nmap
+        - qemu-kvm
+        - virt-manager
+        - guestfs-tools
+        - flatpak
+        - lsb-release
+        - gnome-shell-extension-manager
+        - build-essential
+        - libssl-dev
+        - zlib1g-dev
+        - libbz2-dev
+        - libreadline-dev
+        - libsqlite3-dev
+        - llvm
+        - libncursesw5-dev
+        - xz-utils
+        - tk-dev
+        - libxml2-dev
+        - libxmlsec1-dev
+        - libffi-dev
+        - liblzma-dev
+        - gnome-tweaks
+
+    - name: Adding existing user to group libvirt
+      become: true
+      ansible.builtin.user:
+        name: '{{ ansible_user_id }}'
+        groups: libvirt
+        append: true
 
     - name: Installing Flatpaks
       tags: flatpak
-      block:                
+      block:
       - name: Add the flathub flatpak repository remote to the user installation
         community.general.flatpak_remote:
           name: flathub
           state: present
           flatpakrepo_url: https://flathub.org/repo/flathub.flatpakrepo
           method: user
-          
+
       - name: Install flatpaks
         community.general.flatpak:
           name: '{{ item }}'
@@ -89,7 +88,7 @@
             - 'io.podman_desktop.PodmanDesktop'
             - 'org.keepassxc.KeePassXC'
             - 'rest.insomnia.Insomnia'
-          
+
     - name: Installing Sublime Text
       tags: sublime
       block:
@@ -99,19 +98,19 @@
           url: 'https://download.sublimetext.com/sublimehq-pub.gpg'
           state: present
           keyring: /etc/apt/trusted.gpg.d/sublimehq-pub.gpg
-          
+
       - name: Install Sublime Text Repository
         become: true
         ansible.builtin.apt_repository:
           repo: 'deb https://download.sublimetext.com/ apt/stable/'
           state: present
           filename: sublime-text
-          
+
       - name: Install Sublime Text
         become: true
         ansible.builtin.apt:
           name: sublime-text
-          
+
     - name: Installing VS Code
       tags: code
       block:
@@ -121,14 +120,14 @@
           url: 'https://packages.microsoft.com/keys/microsoft.asc'
           state: present
           keyring: /etc/apt/trusted.gpg.d/microsoft.gpg
-          
+
       - name: Install VSCode Repository
         become: true
         ansible.builtin.apt_repository:
           repo: 'deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main'
           state: present
           filename: vscode
-          
+
       - name: Install Visual Studio Code
         become: true
         apt:
@@ -137,189 +136,207 @@
     - name: Installing Oh-My-Zsh
       tags: ohmyzsh
       block:
-      - name: Verify if Oh-My-Zsh is installed
-        ansible.builtin.command: test -d /home/{{ ansible_user_id }}/.oh-my-zsh
-        register: ohmyzsh
-        ignore_errors: true
-       
-      - name: Installing Oh-My-zsh
-        ansible.builtin.shell:
-          cmd: 'curl -fsL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | bash'
-        when: ohmyzsh.rc != 0
-       
-      - name: Changing Default Shell to ZSH
-        become: yes
-        ansible.builtin.user: 
-          name: '{{ ansible_user_id }}'
-          shell: /bin/zsh 
-         
-      - name: Changing Default ZSH Theme to Agnoster
-        ansible.builtin.lineinfile:
-          path: /home/{{ ansible_user_id }}/.zshrc
-          regexp: '^ZSH_THEME='
-          line: 'ZSH_THEME="agnoster"'
-         
-      - name: Creating ZSH Completion folder
-        ansible.builtin.file:
-          path: /home/{{ ansible_user_id }}/.oh-my-zsh/completions
-          state: directory
-          mode: 0755
-         
-      - name: Adding autoload to compinit
-        ansible.builtin.lineinfile:
-          path: /home/{{ ansible_user_id }}/.zshrc
-          line: 'autoload -U compinit && compinit'
-          state: present
+        - name: Verify if Oh-My-Zsh is installed
+          ansible.builtin.stat:
+            path: '{{ ansible_env.HOME }}/.oh-my-zsh'
+          register: ohmyzsh
 
-      - name: Verify if Zinit is already installed
-        ansible.builtin.command: test -d /home/{{ ansible_user_id }}/.local/share/zinit
-        register: zinit
-        ignore_errors: true
+        - name: Downloading Oh-My-Zsh installer script
+          ansible.builtin.get_url:
+            url: https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+            dest: /tmp/omz-installer.sh
+            mode: '0644'
+          when: ohmyzsh.stat.isdir is not defined
 
-      - name: Installing Zinit ZSH plugin manager
-        ansible.builtin.shell: 
-          cmd: 'curl --fail --show-error --silent --location https://raw.githubusercontent.com/zdharma-continuum/zinit/HEAD/scripts/install.sh | bash'
-        when: zinit.rc != 0
+        - name: Run Oh-My-zsh installer script
+          ansible.builtin.script: /tmp/omz-installer.sh
+          args:
+            creates: '{{ ansible_env.HOME }}/.oh-my-zsh'
+            executable: /bin/bash
+          when: ohmyzsh.stat.isdir is not defined
 
-      - name: Adding Zinit plugins
-        ansible.builtin.blockinfile:
-          path: /home/{{ ansible_user_id }}/.zshrc
-          insertafter: "End of Zinit's installer chunk"
-          prepend_newline: true
-          append_newline: true
-          block: |
-            zinit light zsh-users/zsh-syntax-highlighting
-            zinit light zsh-users/zsh-autosuggestions
-            zinit light zsh-users/zsh-completions
+        - name: Changing Default Shell to ZSH
+          become: true
+          ansible.builtin.user:
+            name: '{{ ansible_user_id }}'
+            shell: /bin/zsh
 
-            # Load starship theme
-            # line 1: `starship` binary as command, from github release
-            # line 2: starship setup at clone(create init.zsh, completion)
-            # line 3: pull behavior same as clone, source init.zsh
-            zinit ice as"command" from"gh-r" \
-                      atclone"./starship init zsh > init.zsh; ./starship completions zsh > _starship" \
-                      atpull"%atclone" src"init.zsh"
-            zinit light starship/starship
+        - name: Changing Default ZSH Theme to Agnoster
+          ansible.builtin.lineinfile:
+            path: '{{ ansible_env.HOME }}/.zshrc'
+            regexp: '^ZSH_THEME='
+            line: 'ZSH_THEME="agnoster"'
+
+        - name: Creating ZSH Completion folder
+          ansible.builtin.file:
+            path: '{{ ansible_env.HOME }}/.oh-my-zsh/completions'
+            state: directory
+            mode: '0755'
+
+        - name: Adding autoload to compinit
+          ansible.builtin.lineinfile:
+            path: '{{ ansible_env.HOME }}/.zshrc'
+            line: 'autoload -U compinit && compinit'
+            state: present
+
+        - name: Verify if Zinit is already installed
+          ansible.builtin.stat:
+            path: '{{ ansible_env.HOME }}/.local/share/zinit'
+          register: zinit
+
+        - name: Downloading Zinit ZSH plugin manager
+          ansible.builtin.get_url:
+            url: 'https://raw.githubusercontent.com/zdharma-continuum/zinit/HEAD/scripts/install.sh'
+            dest: /tmp/zinit-installer.sh
+            mode: '0644'
+          when: zinit.stat.isdir is not defined
+
+        - name: Run Zinit installer
+          ansible.builtin.script: /tmp/zinit-installer.sh
+          args:
+            creates: '{{ ansible_env.HOME }}/.local/share/zinit'
+            executable: /bin/bash
+          when: zinit.stat.isdir is not defined
+
+        - name: Adding Zinit plugins
+          ansible.builtin.blockinfile:
+            path: '{{ ansible_env.HOME }}/.zshrc'
+            marker: "# {mark} ANSIBLE MANAGED BLOCK FOR ZINIT PLUGINS"
+            block: |
+              zinit light zsh-users/zsh-syntax-highlighting
+              zinit light zsh-users/zsh-autosuggestions
+              zinit light zsh-users/zsh-completions
 
     - name: Installing Docker and Docker Compose
       tags: docker
-      block: 
-      - name: Install Docker Key
-        become: true
-        ansible.builtin.apt_key:
-          url: 'https://download.docker.com/linux/ubuntu/gpg'
-          state: present
-          keyring: /etc/apt/trusted.gpg.d/docker.gpg
-         
-      - name: Install Docker Repository
-        become: true
-        ansible.builtin.apt_repository:
-          repo: 'deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable'
-          state: present
-          filename: docker-ce
-         
-      - name: Install Docker and Docker Compose
-        become: true
-        ansible.builtin.apt:
-          name: docker-ce
-         
-      - name: Adding existing user to group Docker
-        become: yes
-        ansible.builtin.user: 
-          name: '{{ ansible_user_id }}'
-          groups: docker 
-          append: yes                       
-         
-      - name: Install Docker and Docker-Compose Zsh Completion
-        ansible.builtin.lineinfile:
-          path: /home/{{ ansible_user_id }}/.zshrc
-          regexp: '^plugins='
-          line: 'plugins=(git docker docker-compose)'
-       
+      block:
+        - name: Install Docker Key
+          become: true
+          ansible.builtin.apt_key:
+            url: 'https://download.docker.com/linux/ubuntu/gpg'
+            state: present
+            keyring: /etc/apt/trusted.gpg.d/docker.gpg
+
+        - name: Install Docker Repository
+          become: true
+          ansible.builtin.apt_repository:
+            repo: 'deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable'
+            state: present
+            filename: docker-ce
+
+        - name: Install Docker and Docker Compose
+          become: true
+          ansible.builtin.apt:
+            name: docker-ce
+
+        - name: Adding existing user to group Docker
+          become: true
+          ansible.builtin.user:
+            name: '{{ ansible_user_id }}'
+            groups: docker
+            append: true
+
+        - name: Install Docker and Docker-Compose Zsh Completion
+          ansible.builtin.lineinfile:
+            path: /home/{{ ansible_user_id }}/.zshrc
+            regexp: '^plugins='
+            line: 'plugins=(git docker docker-compose)'
+
     - name: Kubernetes Tasks
       tags: kubernetes
-      block:      
-      - name: Installing Kind 0.26.0
-        become: true
-        ansible.builtin.uri: 
-          url: https://kind.sigs.k8s.io/dl/v0.26.0/kind-linux-amd64
-          dest: /usr/local/bin/kind
-          mode: 755
-          creates: /usr/local/bin/kind
+      block:
+        - name: Installing Kind 0.26.0
+          become: true
+          ansible.builtin.uri:
+            url: https://kind.sigs.k8s.io/dl/v0.26.0/kind-linux-amd64
+            dest: /usr/local/bin/kind
+            mode: 755
+            creates: /usr/local/bin/kind
 
-      - name: Installing Kubectl 1.32.0
-        become: true
-        ansible.builtin.get_url:    
-          url: 'https://dl.k8s.io/release/v1.32.0/bin/linux/amd64/kubectl'
-          dest: /usr/local/bin/kubectl
-          mode: 755
-         
-      - name: Downloading Kubectx and Kubens 
-        become: true
-        ansible.builtin.git:
-          repo: 'https://github.com/ahmetb/kubectx'
-          dest: /opt/kubectx 
-         
-      - name: Creating Symlink to kubectx and kubens 
-        become: true
-        ansible.builtin.file:
-          src: '/opt/kubectx/{{ item }}'
-          dest: '/usr/local/bin/{{ item }}'
-          state: link
-        with_items:
-          - kubectx
-          - kubens  
-         
-      - name: Creating ZSH Completion  
-        ansible.builtin.file:
-          src: '/opt/kubectx/completion/_{{ item }}'
-          dest: '/home/{{ ansible_user_id }}/.oh-my-zsh/completions/_{{ item }}'
-          state: link
-        with_items:
-          - kubectx.zsh
-          - kubens.zsh
+        - name: Installing Kubectl 1.32.0
+          become: true
+          ansible.builtin.get_url:
+            url: 'https://dl.k8s.io/release/v1.32.0/bin/linux/amd64/kubectl'
+            dest: /usr/local/bin/kubectl
+            mode: 755
+
+        - name: Downloading Kubectx and Kubens
+          become: true
+          ansible.builtin.git:
+            repo: 'https://github.com/ahmetb/kubectx'
+            dest: /opt/kubectx
+            version: v0.9.5
+
+        - name: Creating Symlink to kubectx and kubens
+          become: true
+          ansible.builtin.file:
+            src: '/opt/kubectx/{{ item }}'
+            dest: '/usr/local/bin/{{ item }}'
+            state: link
+          with_items:
+            - kubectx
+            - kubens
+
+        - name: Creating ZSH Completion
+          ansible.builtin.file:
+            src: '/opt/kubectx/completion/_{{ item }}'
+            dest: '/home/{{ ansible_user_id }}/.oh-my-zsh/completions/_{{ item }}'
+            state: link
+          with_items:
+            - kubectx.zsh
+            - kubens.zsh
 
     - name: Installing java tools
       tags: java
       block:
-      - name: Verify if SDKMAN already installed
-        ansible.builtin.command: test -d /home/{{ ansible_user_id }}/.sdkman
-        register: sdkman
-        ignore_errors: true
+        - name: Verify if SDKMAN already installed
+          ansible.builtin.stat:
+            path: '{{ ansible_env.HOME }}/.sdkman'
+          register: sdkman
 
-      - name: Installing SDKMAN
-        ansible.builtin.shell:
-          cmd: 'curl -s "https://get.sdkman.io" | bash'
-        when: sdkman.rc != 0
+        - name: Download SDKMAN installer script
+          ansible.builtin.get_url:
+            url: https://get.sdkman.io
+            dest: /tmp/sdkman-installer.sh
+            mode: '0644'
+          when: sdkman.stat.isdir is not defined
 
-      - name: Installing SDKs
-        register: sdk_install
-        changed_when: '"is already installed." not in sdk_install.stdout'
-        failed_when: >-
-          sdk_install.rc != 0 and
-          "is already installed." not in sdk_install.stdout
-        ansible.builtin.shell: >-
-          . /home/{{ ansible_user_id }}/.sdkman/bin/sdkman-init.sh &&
-          sdk install {{ item }}
-        args: 
-          executable: /bin/bash
-        loop:
-          - java 8.0.432-tem
-          - java 11.0.25-tem
-          - java 17.0.13-tem
-          - gradle 8.10.2
-          - maven 3.8.5
+        - name: Run SDKMAN installer script
+          ansible.builtin.script: /tmp/sdkman-installer.sh
+          args:
+            executable: /bin/bash
+            creates: '{{ ansible_env.HOME }}/.pyenv/'
+          when: sdkman.stat.isdir is not defined
 
-      - name: Set default SDKs
-        ansible.builtin.shell: >-
-          . /home/{{ ansible_user_id }}/.sdkman/bin/sdkman-init.sh &&
-          sdk default {{ item }}
-        args:
-          executable: /bin/bash
-        loop:
-          - java 17.0.13-tem
-          - gradle 8.10.2
-          - maven 3.8.5
+        - name: Installing SDKs
+          register: sdk_install
+          changed_when: '"is already installed." not in sdk_install.stdout'
+          failed_when: >-
+            sdk_install.rc != 0 and
+            "is already installed." not in sdk_install.stdout
+          ansible.builtin.shell: >-
+            . {{ ansible_env.HOME }}/.sdkman/bin/sdkman-init.sh &&
+            sdk install {{ item }}
+          args:
+            executable: /bin/bash
+          loop:
+            - java 8.0.432-tem
+            - java 11.0.25-tem
+            - java 17.0.13-tem
+            - gradle 8.10.2
+            - maven 3.8.5
+
+        - name: Set default SDKs
+          changed_when: false
+          ansible.builtin.shell: >-
+            . /home/{{ ansible_user_id }}/.sdkman/bin/sdkman-init.sh &&
+            sdk default {{ item }}
+          args:
+            executable: /bin/bash
+          loop:
+            - java 17.0.13-tem
+            - gradle 8.10.2
+            - maven 3.8.5
 
     - name: Node Tasks
       tags: node
@@ -332,7 +349,7 @@
 
         - name: Configuring asdf
           ansible.builtin.blockinfile:
-            path: /home/{{ ansible_user_id }}/.zshrc
+            path: '{{ ansible_env.HOME }}/.zshrc'
             block: |
               . "$HOME/.asdf/asdf.sh"
               # append completions to fpath
@@ -344,8 +361,14 @@
             asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
           args:
             executable: /bin/bash
+            creates: '{{ ansible_env.HOME }}/.asdf/plugins/nodejs'
 
         - name: Install NodeJS versions
+          register: asdf_install
+          changed_when: '"is already installed" not in asdf_install.stdout'
+          failed_when: >-
+            asdf_install.rc != 0 and
+            "is already installed" not in asdf_install.stdout
           ansible.builtin.shell: |
             . {{ ansible_env.HOME }}/.asdf/asdf.sh
             asdf install nodejs {{ item }}
@@ -355,8 +378,9 @@
             - 22.13.0
             - 20.18.1
             - 14.21.3
-        
+
         - name: Configure NodeJS global version
+          changed_when: false
           ansible.builtin.shell: |
             . {{ ansible_env.HOME }}/.asdf/asdf.sh
             asdf global nodejs 22.13.0
