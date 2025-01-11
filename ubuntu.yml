@@ -504,6 +504,20 @@
           notify:
             - Unarchive Intellij Idea Community tarball
 
+    - name: Small adjustments
+      tags: adjustments
+      block:
+        - name: Get default monospace font name
+          ansible.builtin.command: gsettings get org.gnome.desktop.interface monospace-font-name
+          register: default_monospace_font
+          changed_when: default_monospace_font.rc != 0
+
+        - name: Set Jetbrains default monotspace font
+          ansible.builtin.command: "gsettings set org.gnome.desktop.interface monospace-font-name 'Jetbrains Mono 13'"
+          register: set_default_monospace_font
+          changed_when: set_default_monospace_font.rc != 0
+          when: default_monospace_font.stdout != "'Jetbrains Mono 13'"
+
   handlers:
     - name: Install DBeaver deb file
       become: true
