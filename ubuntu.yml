@@ -515,6 +515,8 @@
       ansible.builtin.unarchive:
         src: /tmp/ideaIC.tar.gz
         dest: /opt/ideaIC
+        owner: '{{ ansible_user_id }}'
+        group: '{{ ansible_user_gid }}'
         creates: /opt/ideaIC/bin
         remote_src: true
         mode: '0755'
