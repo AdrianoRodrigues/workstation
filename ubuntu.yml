@@ -470,12 +470,40 @@
             url: https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb
             dest: /tmp/dbeaver-ce_latest_amd64.deb
             mode: '0664'
-          when: "'dbeaver' in ansible_facts.packages"
+          when: "'dbeaver-ce' not in ansible_facts.packages"
           notify:
             - Install DBeaver deb file
+
+    - name: Intellij Idea tasks
+      tags: idea
+      block:
+        - name: Verify if Intellij Idea Community is already installed
+          ansible.builtin.stat:
+            path: /opt/ideaIC/bin
+          register: idea_bin_dir
+
+        - name: Download Intellij Idea Community tarball
+          ansible.builtin.get_url:
+            url: https://download.jetbrains.com/idea/ideaIC-2024.3.1.1.tar.gz
+            dest: /tmp/ideaIC.tar.gz
+            mode: '0664'
+          when: not idea_bin_dir.stat.exists
+          notify:
+            - Unarchive Intellij Idea Community tarball
 
   handlers:
     - name: Install DBeaver deb file
       become: true
       ansible.builtin.apt:
         deb: /tmp/dbeaver-ce_latest_amd64.deb
+
+    - name: Unarchive Intellij Idea Community tarball
+      become: true
+      ansible.builtin.unarchive:
+        src: /tmp/ideaIC.tar.gz
+        dest: /opt/ideaIC
+        creates: /opt/ideaIC/bin
+        remote_src: true
+        mode: '0755'
+        extra_opts:
+          - --strip-components=1
