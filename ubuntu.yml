@@ -215,16 +215,17 @@
         - name: Downloading Starship installer
           ansible.builtin.get_url:
             url: https://starship.rs/install.sh
-            dest: /tmp/startship-installer.sh
+            dest: /tmp/starship-installer.sh
             mode: '0644'
           when: not starship.stat.exists
 
         - name: Run Starship installer
-          ansible.builtin.script: /tmp/startship-installer.sh
+          ansible.builtin.script:
+            cmd: /tmp/starship-installer.sh --yes
           become: true
           args:
             creates: /usr/local/bin/starship
-            executable: /bin/bash
+            executable: /bin/sh
           when: not starship.stat.exists
 
         - name: Configure Oh-My-Zsh to use Startship
