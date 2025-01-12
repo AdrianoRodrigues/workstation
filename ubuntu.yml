@@ -57,6 +57,7 @@
         - libffi-dev
         - liblzma-dev
         - gnome-tweaks
+        - pipx
 
     - name: Adding existing user to group libvirt
       become: true
@@ -517,6 +518,36 @@
           register: set_default_monospace_font
           changed_when: set_default_monospace_font.rc != 0
           when: default_monospace_font.stdout != "'Jetbrains Mono 13'"
+
+        - name: Verify if gnome-extensions-cli is already installed
+          ansible.builtin.stat:
+            path: '{{ ansible_env.HOME }}/.local/bin/gext'
+          register: gext
+
+        - name: Install gnome-extensions-cli
+          ansible.builtin.shell: |
+            pipx ensurepath && pipx install gnome-extensions-cli --system-site-packages
+          register: install_gext
+          when: not gext.stat.exists
+          changed_when: install_gext.rc != 0
+
+        - name: Install some gnome-extensions
+          register: gext_install
+          changed_when: '"is already installed" not in gext_install.stdout'
+          failed_when: >-
+            gext_install.rc != 0 and
+            '"is already installed" not in gext_install.stdout'
+          ansible.builtin.command:
+            cmd: gext -F install {{ item }}
+          loop:
+            - dash-to-dock@micxgx.gmail.com
+            - transparent-top-bar@ftpix.com
+            - trayIconsReloaded@selfmade.pl
+            - windowIsReady_Remover@nunofarruca@gmail.com
+            - lockkeys@vaina.lt
+            - Vitals@CoreCoding.com
+            - just-perfection-desktop@just-perfection
+            - tilingshell@ferrarodomenico.com
 
   handlers:
     - name: Install DBeaver deb file
